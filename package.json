@@ -1,0 +1,56 @@
+{
+  "name": "oirochi-observer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "seed": "knex seed:run --specific=fantom_token_data.ts",
+    "build": "rm -rf ./build && tsc",
+    "start": "npm run knex:migrate && node ./build/src/index.js",
+    "upgrade": "pm2 stop 0 && git pull && npx knex migrate:latest && npm run build && pm2 start 0",
+    "release": "npm run fix && prettier --check --write ./src/**/*.ts && npm run test && npm run build && node ./devel.js",
+    "check": "npm run fix && prettier --check --write ./src/**/*.ts && npm run test && npm run build",
+    "knex:migrate": "knex migrate:latest",
+    "doc": "typedoc",
+    "test": "echo \"No test specified\" && exit 0",
+    "mocha-test": "mocha -r ts-node/register tests/\\*\\*/\\*.spec.ts",
+    "lint": "eslint --config .eslintrc.json --ignore-path .eslintignore ./src/**/*.ts",
+    "fix": "eslint --config .eslintrc.json --fix --ignore-path .eslintignore ./src/**/*.ts",
+    "dev": "nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
+    "dev:debug": "node --inspect -r ts-node/register ./src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orochi-network/orochi-observer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/orochi-network/orochi-observer/issues"
+  },
+  "homepage": "https://github.com/orochi-network/orochi-observer#readme",
+  "devDependencies": {
+    "@types/node": "^17.0.21",
+    "@typescript-eslint/eslint-plugin": "^5.13.0",
+    "@typescript-eslint/parser": "^5.13.0",
+    "eslint": "^8.10.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.5.1",
+    "ts-node": "^10.6.0",
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "@ethersproject/abstract-provider": "^5.5.1",
+    "@dkdao/framework": "^1.0.36",
+    "ethers": "^5.5.4",
+    "js-sha3": "^0.8.0",
+    "knex": "0.95.15",
+    "mysql": "^2.18.1",
+    "no-case": "^3.0.4",
+    "noqueue": "^4.0.4",
+    "uuid": "^8.3.2"
+  }
+}
