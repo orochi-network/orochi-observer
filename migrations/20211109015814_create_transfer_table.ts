@@ -13,11 +13,11 @@ export async function up(knex: Knex): Promise<void> {
 
     table.string('eventId', 66).unique().index().comment('Unique event Id, for tracking');
 
-    table.string('sender', 42).notNullable().index().comment('Sender');
+    table.string('from', 42).notNullable().index().comment('Sender');
 
-    table.string('receiver', 42).notNullable().index().comment('Receiver');
+    table.string('to', 42).notNullable().index().comment('Receiver');
 
-    table.string('nftId', 66).notNullable().index().comment('Id of NFT token');
+    table.string('value', 66).notNullable().index().comment('Id of NFT token');
 
     table.bigInteger('blockNumber').unsigned().index().comment('Block number of nft transfer');
 

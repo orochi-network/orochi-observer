@@ -14,9 +14,9 @@ export interface ITransfer {
   tokenId: number;
   status: number;
   eventId: string;
-  sender: string;
-  receiver: string;
-  nftId: string;
+  from: string;
+  to: string;
+  value: string;
   blockNumber: number;
   transactionHash: string;
   createdDate: string;
@@ -35,7 +35,7 @@ export class ModelTransfer extends ModelMysqlBasic<ITransfer> {
     super('transfer');
   }
 
-  public async getNewArriveTransaction(): Promise<ITransferDetail[]> {
+  public async getNewArriveTransaction(): Promise<{ transactionHash: string; transfer: ITransferDetail[] }> {
     const ret = await this.getDefaultKnex()
       .select('transactionHash')
       .where({ status: ETransferStatus.NewTransfer })
@@ -44,13 +44,13 @@ export class ModelTransfer extends ModelMysqlBasic<ITransfer> {
       .first();
     if (typeof ret !== 'undefined') {
       const { transactionHash } = ret;
-      const result = await this.getDetailQuery().where({ transactionHash });
-      /* await this.getDefaultKnex().update({ status: ETransferStatus.Processing }).where({
+      const transfer = await this.getDetailQuery().where({ transactionHash });
+      await this.getDefaultKnex().update({ status: ETransferStatus.Processing }).where({
         transactionHash,
-      }); */
-      return result;
+      });
+      return { transactionHash, transfer };
     }
-    return [];
+    return { transactionHash: '', transfer: [] };
   }
 
   public getDetailQuery() {
@@ -61,9 +61,9 @@ export class ModelTransfer extends ModelMysqlBasic<ITransfer> {
         'e.tokenId as tokenId',
         'status',
         'eventId',
-        'sender',
-        'receiver',
-        'nftId',
+        'from',
+        'to',
+        'value',
         'blockNumber',
         'transactionHash',
         'e.createdDate as createdDate',

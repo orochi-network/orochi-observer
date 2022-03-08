@@ -98,7 +98,7 @@ export const eventSync = async () => {
         rpcRetries,
       );
     });
-    AppLogger.debug('Get data from RPC cost:', Date.now() - startTime, 'ms');
+    AppLogger.info('Get data from RPC cost:', Date.now() - startTime, 'ms');
     let count = 0;
     const allLogs = result.filter((e) => e.length > 0);
     startTime = Date.now();
@@ -114,9 +114,9 @@ export const eventSync = async () => {
               tokenId: AppState.getToken(contractAddress).id,
               status: ETransferStatus.NewTransfer,
               eventId,
-              sender: from,
-              receiver: to,
-              nftId: value,
+              from,
+              to,
+              value,
               blockNumber,
               transactionHash,
             };
@@ -126,7 +126,7 @@ export const eventSync = async () => {
               tx('transfer')
                 .insert(transferRecords)
                 .toString()
-                .replace(/insert\sinto/i, 'insert ignore into'),
+                .replace(/insert/i, 'insert ignore'),
             );
           }
         }
@@ -137,7 +137,7 @@ export const eventSync = async () => {
       })
       .exec();
     if (isTxSuccess) {
-      AppLogger.debug(`Insert ${count} event records cost:`, Date.now() - startTime, 'ms');
+      AppLogger.info(`Insert ${count} event records cost:`, Date.now() - startTime, 'ms');
       const percent = (toBlock * 100) / syncing.targetBlock;
       AppLogger.info(
         `Completed sync ${toBlock - fromBlock} blocks:`,

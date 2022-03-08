@@ -15,13 +15,13 @@ export async function up(knex: Knex): Promise<void> {
 
     table.bigInteger('itemApplication').notNullable().index().comment('Application Id of the item');
 
-    table.integer('itemEdition').notNullable().comment('Edition of the item');
+    table.integer('itemEdition').notNullable().index().comment('Edition of the item');
 
-    table.integer('itemGeneration').notNullable().comment('Generation of the item');
+    table.integer('itemGeneration').notNullable().index().comment('Generation of the item');
 
-    table.integer('itemRareness').notNullable().comment('Rareness of the item');
+    table.integer('itemRareness').notNullable().index().comment('Rareness of the item');
 
-    table.integer('itemType').notNullable().comment('Type of the item');
+    table.integer('itemType').notNullable().index().comment('Type of the item');
 
     table.bigInteger('itemId').notNullable().index().comment('Id  of the item');
 

@@ -1,5 +1,6 @@
 import { Singleton } from '@dkdao/framework';
 import { Provider } from '@ethersproject/abstract-provider';
+import { Knex } from 'knex';
 import { QueueLoop } from 'noqueue';
 import ModelSync from '../model/model-sync';
 import { IToken } from '../model/model-token';
@@ -39,6 +40,14 @@ class State {
 
   get queue(): QueueLoop {
     return this.data.get('application-loop');
+  }
+
+  set knex(value: Knex) {
+    this.data.set('knex-instance', value);
+  }
+
+  get knex(): Knex {
+    return this.data.get('knex-instance');
   }
 
   set token(value: IToken) {

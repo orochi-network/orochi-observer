@@ -13,6 +13,9 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
   // Init queue loop
   AppState.queue = new QueueLoop();
 
+  // Knex instance
+  AppState.knex = Connector.getInstance();
+
   // Init RPC provider
   AppState.provider = new ethers.providers.StaticJsonRpcProvider(AppConf.fullNodeRpc);
 
@@ -26,8 +29,8 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
   if (await AppState.syncing.isNotExist('chainId', chainId)) {
     AppLogger.info('Init syncing data for the first time', chainId);
     AppState.syncing.chainId = chainId;
-    AppState.syncing.startBlock = 24929160;
-    AppState.syncing.syncedBlock = 24929160;
+    AppState.syncing.startBlock = 25007080;
+    AppState.syncing.syncedBlock = 25007080;
     AppState.syncing.targetBlock = (await AppState.provider.getBlockNumber()) - safeConfirmation;
     await AppState.syncing.init();
   } else {
@@ -43,15 +46,12 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
     AppState.token = tokens[i];
   }
 
-  AppState.queue.on('error', (err: Error) => AppLogger.error(err));
+  AppState.queue.on('error', (name: string, err: Error) => AppLogger.error(name, err));
 
   // Init token data
   AppState.queue
-    .add('Task 1', eventSync)
-    .add('Task 2', updateOwnership)
-    .add('Task 3', async () => {
-      AppLogger.info('Hello 3');
-    })
+    .add('Syncing event from blockchain', eventSync)
+    .add('Update ownership and card issuance', updateOwnership)
     .start();
 })();
 
