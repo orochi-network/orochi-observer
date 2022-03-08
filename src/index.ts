@@ -3,11 +3,17 @@ import { QueueLoop } from 'noqueue';
 import { Connector } from '@dkdao/framework';
 import { AppConf, AppEvent, AppState, AppLogger } from './helper';
 import ModelSync from './model/model-sync';
-import { eventSync, safeConfirmation } from './tasks';
+import { eventSync, safeConfirmation } from './tasks/event-sync';
 import ModelToken from './model/model-token';
 import updateOwnership from './tasks/update-ownership';
+import updateOwnershipLegacy from './tasks/update-ownership-legacy';
 
 Connector.connectByUrl(AppConf.mariadbConnectUrl);
+
+const startBlock = new Map<number, number>([
+  [250, 25007080],
+  [137, 17869937],
+]);
 
 (async () => {
   // Init queue loop
@@ -29,8 +35,8 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
   if (await AppState.syncing.isNotExist('chainId', chainId)) {
     AppLogger.info('Init syncing data for the first time', chainId);
     AppState.syncing.chainId = chainId;
-    AppState.syncing.startBlock = 25007080;
-    AppState.syncing.syncedBlock = 25007080;
+    AppState.syncing.startBlock = startBlock.get(chainId) || 0;
+    AppState.syncing.syncedBlock = startBlock.get(chainId) || 0;
     AppState.syncing.targetBlock = (await AppState.provider.getBlockNumber()) - safeConfirmation;
     await AppState.syncing.init();
   } else {
@@ -49,10 +55,15 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
   AppState.queue.on('error', (name: string, err: Error) => AppLogger.error(name, err));
 
   // Init token data
-  AppState.queue
-    .add('Syncing event from blockchain', eventSync)
-    .add('Update ownership and card issuance', updateOwnership)
-    .start();
+  AppState.queue.add('Syncing event from blockchain', eventSync);
+
+  if (chainId === 250) {
+    AppState.queue.add('Update ownership and card issuance', updateOwnership);
+  } else {
+    AppState.queue.add('Update ownership and card issuance', updateOwnershipLegacy);
+  }
+
+  AppState.queue.start();
 })();
 
 // Grateful shutdown handler
