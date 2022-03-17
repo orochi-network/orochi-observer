@@ -13,6 +13,7 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
 const startBlock = new Map<number, number>([
   [250, 25007080],
   [137, 17869937],
+  [4002, 5229640],
 ]);
 
 (async () => {
@@ -57,7 +58,7 @@ const startBlock = new Map<number, number>([
   // Init token data
   AppState.queue.add('Syncing event from blockchain', eventSync);
 
-  if (chainId === 250) {
+  if (chainId === 250 || chainId === 4002) {
     AppState.queue.add('Update ownership and card issuance', updateOwnership);
   } else {
     AppState.queue.add('Update ownership and card issuance', updateOwnershipLegacy);
