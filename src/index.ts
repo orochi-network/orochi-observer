@@ -13,6 +13,7 @@ Connector.connectByUrl(AppConf.mariadbConnectUrl);
 const startBlock = new Map<number, number>([
   [250, 25007080],
   [137, 17869937],
+  [4002, 5229640],
 ]);
 
 (async () => {
