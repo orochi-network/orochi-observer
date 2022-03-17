@@ -58,7 +58,7 @@ const startBlock = new Map<number, number>([
   // Init token data
   AppState.queue.add('Syncing event from blockchain', eventSync);
 
-  if (chainId === 250) {
+  if (chainId === 250 || chainId === 4002) {
     AppState.queue.add('Update ownership and card issuance', updateOwnership);
   } else {
     AppState.queue.add('Update ownership and card issuance', updateOwnershipLegacy);
