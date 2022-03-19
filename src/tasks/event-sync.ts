@@ -7,15 +7,15 @@ import { AppLogger, parseEvent } from '../helper';
 import { AppState } from '../helper/state';
 import { ETransferStatus } from '../model/model-transfer';
 
-const numberOfBlockToBeFastSync = 2000;
+const numberOfBlockToBeFastSync = 1000;
 
 export const safeConfirmation = 20;
 
-// const slowSyncTime = 5000;
+const slowSyncTime = 5000;
 
-// const fastSyncTime = 200;
+const fastSyncTime = 100;
 
-const numberOfBlockToSync = 200;
+const numberOfBlockToSync = 99;
 
 const syncLimit = Math.floor(numberOfBlockToBeFastSync / numberOfBlockToSync);
 
@@ -68,21 +68,27 @@ function calculateSyncingSchedule(fBlock: number, tBlock: number): ISyncingSched
 }
 
 export const eventSync = async () => {
-  // AppState.syncing.syncedBlock = 32718980;
   let startTime = 0;
-  const { syncing, provider } = AppState;
+  const { syncing, provider, queue } = AppState;
 
   // Adjust target block and padding time
   if (syncing.targetBlock - syncing.syncedBlock < numberOfBlockToBeFastSync) {
     syncing.targetBlock = (await AppState.provider.getBlockNumber()) - safeConfirmation;
-    // Can't adjust padding time due to missing sync
-    if (syncing.targetBlock - syncing.syncedBlock < numberOfBlockToBeFastSync) {
-      // We need to slow down since the number of to sync is small than numberOfBlockToBeSync
-      // queue.setPaddingTime(slowSyncTime);
-    } else {
-      // We need to speed up to catch up
-      // queue.setPaddingTime(fastSyncTime);
-    }
+  }
+
+  // Can't adjust padding time due to missing sync
+  if (syncing.targetBlock - syncing.syncedBlock < numberOfBlockToBeFastSync && AppState.paddingTime !== slowSyncTime) {
+    // We need to slow down since the number of to sync is small than numberOfBlockToBeSync
+    AppLogger.info('Adjust padding time to', slowSyncTime, 'ms');
+    queue.setPaddingTime(slowSyncTime);
+    AppState.paddingTime = slowSyncTime;
+  }
+
+  if (syncing.targetBlock - syncing.syncedBlock > numberOfBlockToBeFastSync && AppState.paddingTime !== fastSyncTime) {
+    // We need to speed up to catch up
+    AppLogger.info('Adjust padding time to', fastSyncTime, 'ms');
+    queue.setPaddingTime(fastSyncTime);
+    AppState.paddingTime = fastSyncTime;
   }
 
   const { fromBlock, toBlock, payload } = calculateSyncingSchedule(syncing.syncedBlock, syncing.targetBlock);
@@ -141,7 +147,7 @@ export const eventSync = async () => {
       const percent = (toBlock * 100) / syncing.targetBlock;
       AppLogger.info(
         `Completed sync ${toBlock - fromBlock} blocks:`,
-        `${fromBlock} - ${toBlock} [${percent.toFixed(4)}%]`,
+        `${fromBlock} - ${toBlock} [${percent.toFixed(4)}%] target: ${syncing.targetBlock}`,
       );
       syncing.syncedBlock = toBlock;
       await syncing.save();

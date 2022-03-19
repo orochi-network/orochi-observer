@@ -50,6 +50,14 @@ class State {
     return this.data.get('knex-instance');
   }
 
+  get paddingTime(): number {
+    return this.data.get('padding-time');
+  }
+
+  set paddingTime(value: number) {
+    this.data.set('padding-time', value);
+  }
+
   set token(value: IToken) {
     this.tokenData.set(value.address.toLowerCase(), value);
   }

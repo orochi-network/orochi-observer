@@ -31,6 +31,9 @@ const startBlock = new Map<number, number>([
   AppLogger.info('Connected to chain ID:', chainId);
   AppState.chainId = chainId;
 
+  // Default padding time
+  AppState.paddingTime = 1000;
+
   // Init syncing status
   AppState.syncing = new ModelSync();
   if (await AppState.syncing.isNotExist('chainId', chainId)) {

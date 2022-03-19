@@ -2251,9 +2251,9 @@ nopt@~1.0.10:
     abbrev "1"
 
 noqueue@^4.0.4:
-  version "4.0.5"
-  resolved "https://registry.npmjs.org/noqueue/-/noqueue-4.0.5.tgz#f21959eaaa591619496531f11781a880a6911f2c"
-  integrity sha512-GTBRQT5ggHJJiIgcbJ/orQce5hbwGQNRz48940zo8i9Pm/jdbfMU5hPRkQ3O5kpOa/abTPMB+WxfiQoKrilAfQ==
+  version "4.0.7"
+  resolved "https://registry.npmjs.org/noqueue/-/noqueue-4.0.7.tgz#f87666d3b2c5cce0b128390359b7339afdf7c78d"
+  integrity sha512-l3novarpPotJraWzU34ODMuaXqIBY/MDqwp38IP/2TxZmdJMXsyCM0sEfaTQ8f5vL+QiWJ5lzkk0GG/WCrKnFQ==
 
 normalize-path@^3.0.0, normalize-path@~3.0.0:
   version "3.0.0"
