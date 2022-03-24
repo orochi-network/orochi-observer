@@ -7,7 +7,7 @@ import { AppLogger, parseEvent } from '../helper';
 import { AppState } from '../helper/state';
 import { ETransferStatus } from '../model/model-transfer';
 
-const numberOfBlockToBeFastSync = 100;
+const numberOfBlockToBeFastSync = 200;
 
 export const safeConfirmation = 20;
 
