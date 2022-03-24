@@ -7,7 +7,7 @@ import { AppLogger, parseEvent } from '../helper';
 import { AppState } from '../helper/state';
 import { ETransferStatus } from '../model/model-transfer';
 
-const numberOfBlockToBeFastSync = 1000;
+const numberOfBlockToBeFastSync = 100;
 
 export const safeConfirmation = 20;
 
@@ -15,7 +15,7 @@ const slowSyncTime = 5000;
 
 const fastSyncTime = 100;
 
-const numberOfBlockToSync = 99;
+const numberOfBlockToSync = 20;
 
 const syncLimit = Math.floor(numberOfBlockToBeFastSync / numberOfBlockToSync);
 
@@ -104,9 +104,9 @@ export const eventSync = async () => {
         rpcRetries,
       );
     });
-    AppLogger.info('Get data from RPC cost:', Date.now() - startTime, 'ms');
     let count = 0;
     const allLogs = result.filter((e) => e.length > 0);
+    AppLogger.info('Get data from RPC found:', allLogs.length, 'records, cost:', Date.now() - startTime, 'ms');
     startTime = Date.now();
     let isTxSuccess = true;
     await Transaction.getInstance()
