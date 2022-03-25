@@ -7,7 +7,7 @@ import { AppLogger, parseEvent } from '../helper';
 import { AppState } from '../helper/state';
 import { ETransferStatus } from '../model/model-transfer';
 
-const numberOfBlockToBeFastSync = 300;
+const numberOfBlockToBeFastSync = AppState.chainId === 137 ? 100 : 400;
 
 export const safeConfirmation = 20;
 
@@ -15,7 +15,7 @@ const slowSyncTime = 5000;
 
 const fastSyncTime = 100;
 
-const numberOfBlockToSync = 20;
+const numberOfBlockToSync = AppState.chainId === 137 ? 5 : 20;
 
 const syncLimit = Math.floor(numberOfBlockToBeFastSync / numberOfBlockToSync);
 
