@@ -7,7 +7,7 @@ export interface ISync {
   startBlock: number;
   syncedBlock: number;
   targetBlock: number;
-  lastUpdate: string;
+  updatedDate: string;
   createdDate: string;
 }
 
@@ -67,8 +67,8 @@ export class ModelSync extends ModelMysqlBasic<ISync> {
     throw new Error('Can not init syncing data');
   }
 
-  public async load(chainId: number) {
-    this.currentStatus = <ISync>await this.basicQuery().where({ chainId }).first();
+  public async load(tokenId: number) {
+    this.currentStatus = <ISync>await this.joinTokenQuery().where({ 't.id': tokenId }).first();
     if (typeof this.currentStatus === 'undefined') {
       throw new Error('Can not load sync status from database');
     }
@@ -80,6 +80,20 @@ export class ModelSync extends ModelMysqlBasic<ISync> {
       await this.getDefaultKnex().update({ startBlock, syncedBlock, targetBlock }).where({ id });
       this.changed = false;
     }
+  }
+
+  public joinTokenQuery(): Knex.QueryBuilder {
+    return this.getKnex()('sync as s')
+      .select(
+        's.id as id',
+        's.chainId as chainId',
+        's.startBlock as startBlock',
+        's.syncedBlock as syncedBlock',
+        's.targetBlock as targetBlock',
+        's.updatedDate as updatedDate',
+        's.createdDate as createdDate',
+      )
+      .join('token as t', 't.syncId', 's.id');
   }
 
   public basicQuery(): Knex.QueryBuilder {

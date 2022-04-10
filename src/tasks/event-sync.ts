@@ -5,17 +5,18 @@ import { Knex } from 'knex';
 import { OneForAll, TillSuccess } from 'noqueue';
 import { AppLogger, parseEvent } from '../helper';
 import { AppState } from '../helper/state';
+import { IToken } from '../model/model-token';
 import { ETransferStatus } from '../model/model-transfer';
 
-const numberOfBlockToBeFastSync = AppState.chainId === 137 ? 100 : 400;
+export const numberOfBlockToBeFastSync = 1999;
 
 export const safeConfirmation = 20;
 
-const slowSyncTime = 5000;
+export const slowSyncTime = 5000;
 
-const fastSyncTime = 100;
+export const fastSyncTime = 100;
 
-const numberOfBlockToSync = AppState.chainId === 137 ? 5 : 20;
+export const numberOfBlockToSync = 100;
 
 const syncLimit = Math.floor(numberOfBlockToBeFastSync / numberOfBlockToSync);
 
@@ -29,6 +30,7 @@ interface IPayload {
   fromBlock: number;
   toBlock: number;
   topics: string[];
+  address: string;
 }
 
 interface ISyncingSchedule {
@@ -37,7 +39,7 @@ interface ISyncingSchedule {
   payload: IPayload[];
 }
 
-function calculateSyncingSchedule(fBlock: number, tBlock: number): ISyncingSchedule {
+function calculateSyncingSchedule(fBlock: number, tBlock: number, address: string): ISyncingSchedule {
   const payload: IPayload[] = [];
   const diff = tBlock - fBlock;
   if (diff <= 1) return { fromBlock: fBlock, toBlock: tBlock, payload };
@@ -54,6 +56,7 @@ function calculateSyncingSchedule(fBlock: number, tBlock: number): ISyncingSched
       fromBlock: fBlock + i * numberOfBlockToSync + 1,
       toBlock: syncingBlock,
       topics: [eventTransfer],
+      address,
     });
   }
   if (carry > 1) {
@@ -61,48 +64,36 @@ function calculateSyncingSchedule(fBlock: number, tBlock: number): ISyncingSched
       fromBlock: syncingBlock + 1,
       toBlock: syncingBlock + carry,
       topics: [eventTransfer],
+      address,
     });
     syncingBlock += +carry;
   }
   return { fromBlock, toBlock: syncingBlock, payload };
 }
 
-export const eventSync = async () => {
+export const eventSync = async (token: IToken) => {
   let startTime = 0;
-  const { syncing, provider, queue } = AppState;
+  const { provider, targetBlock } = AppState;
+  const syncing = AppState.getSync(token.id);
+  if (typeof syncing === 'undefined') {
+    throw new Error(`Can not load the syncing data for ${token.name}`);
+  }
 
   // Adjust target block and padding time
-  if (syncing.targetBlock - syncing.syncedBlock < numberOfBlockToBeFastSync) {
-    syncing.targetBlock = (await AppState.provider.getBlockNumber()) - safeConfirmation;
+  if (syncing.targetBlock < targetBlock) {
+    syncing.targetBlock = targetBlock;
   }
 
-  // Can't adjust padding time due to missing sync
-  if (syncing.targetBlock - syncing.syncedBlock < numberOfBlockToBeFastSync && AppState.paddingTime !== slowSyncTime) {
-    // We need to slow down since the number of to sync is small than numberOfBlockToBeSync
-    AppLogger.info('Adjust padding time to', slowSyncTime, 'ms');
-    queue.setPaddingTime(slowSyncTime);
-    AppState.paddingTime = slowSyncTime;
-  }
+  const { fromBlock, toBlock, payload } = calculateSyncingSchedule(
+    syncing.syncedBlock,
+    syncing.targetBlock,
+    token.address,
+  );
 
-  if (syncing.targetBlock - syncing.syncedBlock > numberOfBlockToBeFastSync && AppState.paddingTime !== fastSyncTime) {
-    // We need to speed up to catch up
-    AppLogger.info('Adjust padding time to', fastSyncTime, 'ms');
-    queue.setPaddingTime(fastSyncTime);
-    AppState.paddingTime = fastSyncTime;
-  }
-
-  const { fromBlock, toBlock, payload } = calculateSyncingSchedule(syncing.syncedBlock, syncing.targetBlock);
   if (payload.length > 0) {
     startTime = Date.now();
     const result = await OneForAll<IPayload>(payload, async (filter: IPayload) => {
-      return TillSuccess<IPayload>(
-        async () => {
-          const ret = await provider.getLogs(filter);
-          return ret.filter((log) => AppState.hasToken(log.address.toLowerCase()));
-        },
-        rpcRetryTimeout,
-        rpcRetries,
-      );
+      return TillSuccess<IPayload>(async () => provider.getLogs(filter), rpcRetryTimeout, rpcRetries);
     });
     let count = 0;
     const allLogs = result.filter((e) => e.length > 0);
@@ -114,10 +105,10 @@ export const eventSync = async () => {
         for (let i = 0; i < allLogs.length; i += 1) {
           count += allLogs[i].length;
           const transferRecords = allLogs[i].map((log: ethers.providers.Log) => {
-            const { from, to, value, transactionHash, blockNumber, contractAddress, eventId } = parseEvent(log);
+            const { from, to, value, transactionHash, blockNumber, eventId } = parseEvent(log);
             return {
               chainId: AppState.chainId,
-              tokenId: AppState.getToken(contractAddress).id,
+              tokenId: token.id,
               status: ETransferStatus.NewTransfer,
               eventId,
               from,
@@ -147,7 +138,7 @@ export const eventSync = async () => {
       const percent = (toBlock * 100) / syncing.targetBlock;
       AppLogger.info(
         `Completed sync ${toBlock - fromBlock} blocks:`,
-        `${fromBlock} - ${toBlock} [${percent.toFixed(4)}%] target: ${syncing.targetBlock}`,
+        `${fromBlock} - ${toBlock} [${percent.toFixed(4)}%] target: ${syncing.targetBlock} (${token.name})`,
       );
       syncing.syncedBlock = toBlock;
       await syncing.save();

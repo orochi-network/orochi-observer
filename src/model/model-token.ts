@@ -10,12 +10,14 @@ export enum EToken {
 export interface IToken {
   id: number;
   chainId: number;
+  syncId: number;
   type: EToken;
   name: string;
   address: string;
   symbol: string;
   decimal: number;
   createdDate: string;
+  updatedDate: string;
 }
 
 export class ModelToken extends ModelMysqlBasic<IToken> {
@@ -25,6 +27,18 @@ export class ModelToken extends ModelMysqlBasic<IToken> {
 
   public basicQuery(): Knex.QueryBuilder {
     return this.getDefaultKnex().select('*');
+  }
+
+  public getAllToken(chainId?: number) {
+    if (typeof chainId !== 'undefined' && Number.isInteger(chainId)) {
+      return this.get([
+        {
+          field: 'chainId',
+          value: chainId,
+        },
+      ]);
+    }
+    return this.get();
   }
 
   public getNft(chainId?: number) {
@@ -55,14 +69,6 @@ export class ModelToken extends ModelMysqlBasic<IToken> {
         value: EToken.ERC20,
       },
     ]);
-  }
-
-  public getPayable(chainId?: number) {
-    const query = this.basicQuery().whereIn('type', [EToken.DePayRouter, EToken.ERC20]);
-    if (typeof chainId === 'number') {
-      query.where({ chainId });
-    }
-    return query;
   }
 }
 

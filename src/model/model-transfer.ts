@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import { ModelMysqlBasic } from '@dkdao/framework';
+import { AppState } from '../helper';
 
 export enum ETransferStatus {
   NewTransfer = 0,
@@ -35,10 +36,24 @@ export class ModelTransfer extends ModelMysqlBasic<ITransfer> {
     super('transfer');
   }
 
+  public async getMinSyncedBlock(): Promise<Number> {
+    const knex = this.getKnex();
+    const result = await knex('token as t')
+      .select(knex.raw('MIN(`s`.`syncedBlock`) AS `syncedBlock`'))
+      .join('sync as s', 't.syncId', `s.id`)
+      .whereIn('t.symbol', ['DKI', 'DKC'])
+      .first();
+    if (typeof result === 'undefined' || result === null) {
+      return AppState.targetBlock;
+    }
+    return result.syncedBlock;
+  }
+
   public async getNewArriveTransaction(): Promise<{ transactionHash: string; transfer: ITransferDetail[] }> {
     const ret = await this.getDefaultKnex()
       .select('transactionHash')
       .where({ status: ETransferStatus.NewTransfer })
+      .where('blockNumber', '<', await this.getMinSyncedBlock())
       .orderBy('id', 'asc')
       .limit(1)
       .first();

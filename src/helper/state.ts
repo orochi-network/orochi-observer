@@ -10,6 +10,16 @@ class State {
 
   private tokenData = new Map<string, IToken>();
 
+  private syncData = new Map<number, ModelSync>();
+
+  set targetBlock(value: number) {
+    this.data.set('syncing-target-block', value);
+  }
+
+  get targetBlock(): number {
+    return this.data.get('syncing-target-block');
+  }
+
   set provider(value: Provider) {
     this.data.set('full-node-rpc-provider', value);
   }
@@ -24,14 +34,6 @@ class State {
 
   get chainId(): number {
     return this.data.get('network-chain-id');
-  }
-
-  set syncing(value: ModelSync) {
-    this.data.set('network-syncing', value);
-  }
-
-  get syncing(): ModelSync {
-    return this.data.get('network-syncing');
   }
 
   set queue(value: QueueLoop) {
@@ -66,8 +68,16 @@ class State {
     return this.tokenData.has(address);
   }
 
-  public getToken(address: string): IToken {
-    return this.tokenData.get(address.toLowerCase()) || <IToken>{};
+  public getToken(address: string) {
+    return this.tokenData.get(address.toLowerCase());
+  }
+
+  public setSync(tokenId: number, imSync: ModelSync) {
+    return this.syncData.set(tokenId, imSync);
+  }
+
+  public getSync(tokenId: number) {
+    return this.syncData.get(tokenId);
   }
 }
 

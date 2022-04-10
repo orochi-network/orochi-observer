@@ -1,5 +1,7 @@
 import { AppLogger, AppState, Card, zeroAddress } from '../helper';
+import adjustPaddingTime from '../helper/queue';
 import ModelTransfer, { ETransferStatus, ITransferDetail } from '../model/model-transfer';
+import { fastSyncTime, slowSyncTime } from './event-sync';
 
 const mapBoxAndCard = (nftTransfers: ITransferDetail[]) => {
   // Mapping between burnt boxes and issued cards
@@ -65,6 +67,7 @@ export const updateOwnership = async () => {
   let startTime = Date.now();
   const transactions = await imModelTransfer.getNewArriveTransaction();
   if (transactions.transfer.length > 0) {
+    adjustPaddingTime(fastSyncTime);
     AppLogger.info(`Processing ${transactions.transfer.length} events`);
     const { cardMap, cardIssuance, nftIssuance, changeOfOwnerShip } = mapBoxAndCard(transactions.transfer);
     const nftIssuanceRecords = nftIssuance.map((e: ITransferDetail) => {
@@ -146,6 +149,8 @@ export const updateOwnership = async () => {
         },
       ]);
     }
+  } else {
+    adjustPaddingTime(slowSyncTime);
   }
 };
 
