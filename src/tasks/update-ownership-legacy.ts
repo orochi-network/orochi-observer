@@ -29,7 +29,7 @@ export const updateOwnershipLegacy = async () => {
   const { knex } = AppState;
   const imModelTransfer = new ModelTransfer();
   let startTime = 0;
-  const transactions = await imModelTransfer.getNewArriveTransaction();
+  const transactions = await imModelTransfer.getNewArriveTransactionLegacy();
   if (transactions.transfer.length > 0) {
     adjustPaddingTime(fastSyncTime);
     AppLogger.info(`Processing ${transactions.transfer.length} events`);

@@ -68,6 +68,24 @@ export class ModelTransfer extends ModelMysqlBasic<ITransfer> {
     return { transactionHash: '', transfer: [] };
   }
 
+  public async getNewArriveTransactionLegacy(): Promise<{ transactionHash: string; transfer: ITransferDetail[] }> {
+    const ret = await this.getDefaultKnex()
+      .select('transactionHash')
+      .where({ status: ETransferStatus.NewTransfer })
+      .orderBy('id', 'asc')
+      .limit(1)
+      .first();
+    if (typeof ret !== 'undefined') {
+      const { transactionHash } = ret;
+      const transfer = await this.getDetailQuery().where({ transactionHash });
+      await this.getDefaultKnex().update({ status: ETransferStatus.Processing }).where({
+        transactionHash,
+      });
+      return { transactionHash, transfer };
+    }
+    return { transactionHash: '', transfer: [] };
+  }
+
   public getDetailQuery() {
     return this.getKnex()(`${this.tableName} as e`)
       .select(
