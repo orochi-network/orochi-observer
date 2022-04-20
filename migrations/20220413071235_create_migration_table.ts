@@ -8,6 +8,8 @@ export async function up(knex: Knex): Promise<void> {
 
     table.bigInteger('fromChainId').unsigned().index().comment('From blockchain chain id');
 
+    table.bigInteger('toChainId').unsigned().index().comment('From blockchain chain id');
+
     table.string('owner', 42).notNullable().index().comment('NFT owner');
 
     table.string('tokenId', 66).notNullable().index().comment('NFT token id');
