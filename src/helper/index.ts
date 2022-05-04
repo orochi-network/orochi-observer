@@ -6,3 +6,5 @@ export * from './state';
 export * from './utilities';
 export * from './table';
 export * from './card';
+export * from './sync';
+export * from './queue';

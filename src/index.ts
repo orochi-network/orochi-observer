@@ -1,16 +1,19 @@
 import { ethers } from 'ethers';
 import { OneForAll, QueueLoop } from 'noqueue';
 import { Connector } from '@dkdao/framework';
-import { AppConf, AppEvent, AppState, AppLogger } from './helper';
+import { AppConf, AppEvent, AppState, AppLogger, safeConfirmation } from './helper';
 import ModelSync from './model/model-sync';
-import { eventSync, safeConfirmation } from './tasks/event-sync';
+import { eventSync } from './tasks/event-sync';
 import ModelToken, { IToken } from './model/model-token';
 import updateOwnership from './tasks/update-ownership';
 import updateOwnershipLegacy from './tasks/update-ownership-legacy';
+import ModelContract, { IContract } from './model/model-contract';
+import contractSync from './tasks/contract-sync';
 
 Connector.connectByUrl(AppConf.mariadbConnectUrl);
 
 const defaultStartBlock = new Map<number, number>([
+  [56, 17516750],
   [250, 25007080],
   [137, 17869937],
   [4002, 5229640],
@@ -40,7 +43,7 @@ const defaultStartBlock = new Map<number, number>([
 
   // Get watching token list
   const imToken = new ModelToken();
-  const tokens = await imToken.getAllToken();
+  const tokens = await imToken.getAllToken(AppState.chainId);
 
   AppState.queue.add('Update target block for syncing', async () => {
     const newValue = (await AppState.provider.getBlockNumber()) - safeConfirmation;
@@ -89,12 +92,40 @@ const defaultStartBlock = new Map<number, number>([
     // Set token and loading sync data
     AppState.token = token;
     const newSync = new ModelSync();
-    await newSync.load(token.id);
+    await newSync.loadToken(token.id);
     AppState.setSync(token.id, newSync);
 
     // Init token data
     AppState.queue.add(`Syncing events for ${token.address} (${token.name}) blockchain`, async () => eventSync(token));
   });
+
+  const imContract = new ModelContract();
+  const contracts = await imContract.getAllContract();
+  if (contracts.length > 0) {
+    await OneForAll(contracts, async (contract: IContract) => {
+      const imSync = new ModelSync();
+      if (typeof contract.syncId === 'undefined' || contract.syncId === null) {
+        const newRecord = await imSync.create({
+          chainId: contract.chainId,
+          startBlock: defaultStartBlock.get(contract.chainId) || 0,
+          syncedBlock: defaultStartBlock.get(contract.chainId) || 0,
+          targetBlock: (await AppState.provider.getBlockNumber()) - safeConfirmation,
+        });
+        if (typeof newRecord !== 'undefined') {
+          // Link the token with the sync data
+          await imContract.update(
+            {
+              syncId: newRecord.id,
+            },
+            [{ field: 'id', value: contract.id }],
+          );
+        }
+      }
+      AppState.queue.add(`Syncing events for ${contract.address} (${contract.name}) blockchain`, async () =>
+        contractSync(contract, await ModelSync.quickLoadContract(contract.id)),
+      );
+    });
+  }
 
   if (network.chainId === 250 || network.chainId === 4002) {
     // Fantom and fantom testnet

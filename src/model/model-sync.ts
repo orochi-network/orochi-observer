@@ -67,10 +67,29 @@ export class ModelSync extends ModelMysqlBasic<ISync> {
     throw new Error('Can not init syncing data');
   }
 
-  public async load(tokenId: number) {
+  public static async quickLoadToken(tokenId: number) {
+    const syncInstance = new ModelSync();
+    await syncInstance.loadToken(tokenId);
+    return syncInstance;
+  }
+
+  public async loadToken(tokenId: number) {
     this.currentStatus = <ISync>await this.joinTokenQuery().where({ 't.id': tokenId }).first();
     if (typeof this.currentStatus === 'undefined') {
-      throw new Error('Can not load sync status from database');
+      throw new Error('Can not load sync status for token from database');
+    }
+  }
+
+  public static async quickLoadContract(contractId: number) {
+    const syncInstance = new ModelSync();
+    await syncInstance.loadContract(contractId);
+    return syncInstance;
+  }
+
+  public async loadContract(contractId: number) {
+    this.currentStatus = <ISync>await this.joinContractQuery().where({ 'c.id': contractId }).first();
+    if (typeof this.currentStatus === 'undefined') {
+      throw new Error('Can not load sync status for contract from database');
     }
   }
 
@@ -94,6 +113,20 @@ export class ModelSync extends ModelMysqlBasic<ISync> {
         's.createdDate as createdDate',
       )
       .join('token as t', 't.syncId', 's.id');
+  }
+
+  public joinContractQuery(): Knex.QueryBuilder {
+    return this.getKnex()('sync as s')
+      .select(
+        's.id as id',
+        's.chainId as chainId',
+        's.startBlock as startBlock',
+        's.syncedBlock as syncedBlock',
+        's.targetBlock as targetBlock',
+        's.updatedDate as updatedDate',
+        's.createdDate as createdDate',
+      )
+      .join('contract as c', 'c.syncId', 's.id');
   }
 
   public basicQuery(): Knex.QueryBuilder {

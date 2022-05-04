@@ -1,7 +1,5 @@
-import { AppLogger, AppState, Card, zeroAddress } from '../helper';
-import adjustPaddingTime from '../helper/queue';
+import { AppLogger, AppState, Card, zeroAddress, adjustPaddingTime, fastSyncTime, slowSyncTime } from '../helper';
 import ModelTransfer, { ETransferStatus, ITransferDetail } from '../model/model-transfer';
-import { fastSyncTime, slowSyncTime } from './event-sync';
 
 const mapBoxAndCard = (nftTransfers: ITransferDetail[]) => {
   const cardIssuance: ITransferDetail[] = [];

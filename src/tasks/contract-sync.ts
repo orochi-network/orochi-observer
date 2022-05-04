@@ -1,19 +1,27 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-await-in-loop */
 import { Transaction } from '@dkdao/framework';
-import { ethers } from 'ethers';
+import { ethers, utils } from 'ethers';
 import { Knex } from 'knex';
 import { OneForAll, TillSuccess } from 'noqueue';
-import { AppLogger, parseEvent, calculateSyncingSchedule, IPayload, rpcRetryTimeout, rpcRetries } from '../helper';
+import {
+  AppLogger,
+  calculateSyncingSchedule,
+  IPayload,
+  rpcRetryTimeout,
+  rpcRetries,
+  eventEncoder,
+  eventPurchase,
+} from '../helper';
 import { AppState } from '../helper/state';
-import { IToken } from '../model/model-token';
-import { ETransferStatus } from '../model/model-transfer';
+import { IContract } from '../model/model-contract';
+import ModelSync from '../model/model-sync';
 
-export const eventSync = async (token: IToken) => {
+export const contractSync = async (contract: IContract, syncing: ModelSync) => {
   let startTime = 0;
-  const { provider, targetBlock } = AppState;
-  const syncing = AppState.getSync(token.id);
+  const { provider, targetBlock, chainId } = AppState;
   if (typeof syncing === 'undefined') {
-    throw new Error(`Can not load the syncing data for ${token.name}`);
+    throw new Error(`Can not load the syncing data for ${contract.name}`);
   }
 
   // Adjust target block and padding time
@@ -24,7 +32,8 @@ export const eventSync = async (token: IToken) => {
   const { fromBlock, toBlock, payload } = calculateSyncingSchedule(
     syncing.syncedBlock,
     syncing.targetBlock,
-    token.address,
+    contract.address,
+    [eventPurchase],
   );
 
   if (payload.length > 0) {
@@ -37,27 +46,27 @@ export const eventSync = async (token: IToken) => {
     AppLogger.info('Get data from RPC found:', allLogs.length, 'records, cost:', Date.now() - startTime, 'ms');
     startTime = Date.now();
     let isTxSuccess = true;
+
     await Transaction.getInstance()
       .process(async (tx: Knex.Transaction) => {
         for (let i = 0; i < allLogs.length; i += 1) {
           count += allLogs[i].length;
           const transferRecords = allLogs[i].map((log: ethers.providers.Log) => {
-            const { from, to, value, transactionHash, blockNumber, eventId } = parseEvent(log);
+            const {
+              args: { owner, phaseId, numberOfBoxes, code },
+            } = eventEncoder.parseLog(log);
             return {
-              chainId: AppState.chainId,
-              tokenId: token.id,
-              status: ETransferStatus.NewTransfer,
-              eventId,
-              from,
-              to,
-              value,
-              blockNumber,
-              transactionHash,
+              chainId,
+              buyerAddress: owner.toLowerCase(),
+              phaseId: phaseId.toNumber(),
+              numberOfBoxes: numberOfBoxes.toNumber(),
+              discountCode: utils.toUtf8String(code),
+              transactionHash: log.transactionHash,
             };
           });
           if (transferRecords.length > 0) {
             await tx.raw(
-              tx('transfer')
+              tx('purchase_history')
                 .insert(transferRecords)
                 .toString()
                 .replace(/insert/i, 'insert ignore'),
@@ -75,7 +84,7 @@ export const eventSync = async (token: IToken) => {
       const percent = (toBlock * 100) / syncing.targetBlock;
       AppLogger.info(
         `Completed sync ${toBlock - fromBlock} blocks:`,
-        `${fromBlock} - ${toBlock} [${percent.toFixed(4)}%] target: ${syncing.targetBlock} (${token.name})`,
+        `${fromBlock} - ${toBlock} [${percent.toFixed(4)}%] target: ${syncing.targetBlock} (${contract.name})`,
       );
       syncing.syncedBlock = toBlock;
       await syncing.save();
@@ -87,4 +96,4 @@ export const eventSync = async (token: IToken) => {
   }
 };
 
-export default eventSync;
+export default contractSync;
