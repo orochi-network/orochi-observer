@@ -6,13 +6,15 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.createTable('migration', (table: Knex.CreateTableBuilder) => {
     table.bigIncrements('id').unsigned().primary();
 
+    table.string('originalContractAddress', 42).notNullable().index().comment('originalContractAddress');
+
     table.bigInteger('fromChainId').unsigned().index().comment('From blockchain chain id');
 
     table.bigInteger('toChainId').unsigned().index().comment('From blockchain chain id');
 
     table.string('owner', 42).notNullable().index().comment('NFT owner');
 
-    table.string('tokenId', 66).notNullable().index().comment('NFT token id');
+    table.string('nftTokenId', 66).notNullable().index().comment('NFT token id');
 
     table
       .integer('status')
