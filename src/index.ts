@@ -16,7 +16,7 @@ const defaultStartBlock = new Map<number, number>([
   [56, 17516750],
   [250, 25007080],
   [137, 17869937],
-  [4002, 5229640],
+  [4002, 8907339],
 ]);
 
 (async () => {
@@ -91,16 +91,14 @@ const defaultStartBlock = new Map<number, number>([
 
     // Set token and loading sync data
     AppState.token = token;
-    const newSync = new ModelSync();
-    await newSync.loadToken(token.id);
-    AppState.setSync(token.id, newSync);
+    AppState.setSync(token.id, await ModelSync.quickLoadToken(token.id));
 
     // Init token data
     AppState.queue.add(`Syncing events for ${token.address} (${token.name}) blockchain`, async () => eventSync(token));
   });
 
   const imContract = new ModelContract();
-  const contracts = await imContract.getAllContract();
+  const contracts = await imContract.getAllContract(AppState.chainId);
   if (contracts.length > 0) {
     await OneForAll(contracts, async (contract: IContract) => {
       const imSync = new ModelSync();
@@ -127,11 +125,10 @@ const defaultStartBlock = new Map<number, number>([
     });
   }
 
-  if (network.chainId === 250 || network.chainId === 4002) {
-    // Fantom and fantom testnet
-    AppState.queue.add('Update ownership and card issuance', updateOwnership);
-  } else {
+  if (network.chainId === 137) {
     AppState.queue.add('Update ownership and card issuance', updateOwnershipLegacy);
+  } else {
+    AppState.queue.add('Update ownership and card issuance', updateOwnership);
   }
 
   AppState.queue.start();

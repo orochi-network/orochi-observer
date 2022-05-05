@@ -13,7 +13,7 @@ export interface IContract {
 
 export class ModelContract extends ModelMysqlBasic<IContract> {
   constructor() {
-    super('token');
+    super('contract');
   }
 
   public basicQuery(): Knex.QueryBuilder {
