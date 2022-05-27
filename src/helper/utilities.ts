@@ -1,9 +1,11 @@
 import { noCase } from 'no-case';
+import { Knex } from 'knex';
 import { Utilities } from '@dkdao/framework';
 import cluster from 'cluster';
 import crypto, { createHmac, randomBytes } from 'crypto';
 import { keccak256 } from 'js-sha3';
-import { ethers, utils, BigNumber } from 'ethers';
+import { ethers, utils, BigNumber, Wallet } from 'ethers';
+import { OracleProxy } from '../../abi/types';
 
 export interface IParsedEvent {
   blockNumber: number;
@@ -160,6 +162,14 @@ export function parseEvent(log: ethers.providers.Log): IParsedEvent {
   };
 }
 
+export function uint256ArrayToBytes(uint256Array: string[]) {
+  const instance = Utilities.BytesBuffer.newInstance();
+  for (let i = 0; i < uint256Array.length; i += 1) {
+    instance.writeUint256(uint256Array[i]);
+  }
+  return instance.invoke();
+}
+
 export function createHmacProof(user: string, secret: string) {
   const message = randomBytes(12);
   message.writeUInt32BE(Math.round(Date.now() / 1000), 8);
@@ -204,6 +214,19 @@ export function hexStringToFixedHexString(inputHexString: string, size: number =
 
 export function bigNumberToBytes32(b: ethers.BigNumber): Buffer {
   return Buffer.from(`${b.toHexString().replace(/^0x/i, '').padStart(64, '0')}`, 'hex');
+}
+
+export function toRawQuery(k: Knex, q: Knex.QueryBuilder) {
+  return k.raw(q.toString());
+}
+
+export async function craftProof(oracleSigner: Wallet, oracle: OracleProxy): Promise<Buffer> {
+  const message = bigNumberToBytes32(
+    await oracle.callStatic.getValidTimeNonce(600000, Utilities.String.randomUint128()),
+  );
+  // Make sure that it matched
+  const signedProof = await oracleSigner.signMessage(utils.arrayify(message));
+  return Utilities.BytesBuffer.newInstance().writeBytes(signedProof).writeBytes(message).invoke();
 }
 
 export default {
