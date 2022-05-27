@@ -67,7 +67,9 @@ class State {
     this.provider = new ethers.providers.StaticJsonRpcProvider(AppConf.fullNodeRpc);
     this.targetBlock = (await this.provider.getBlockNumber()) - safeConfirmation;
     this.chainId = (await this.provider.getNetwork()).chainId;
-    this.walletMigrator = new ethers.Wallet(AppConf.migratorPrivateKey, this.provider);
+    if (AppConf.migratorPrivateKey) {
+      this.walletMigrator = new ethers.Wallet(AppConf.migratorPrivateKey, this.provider);
+    }
 
     const networkCfg = this.constantNetwork.get(this.chainId);
     if (networkCfg) {
@@ -83,16 +85,18 @@ class State {
 
     let i = 0;
     let balance = BigNumber.from(0);
-    do {
-      const wallet = ethers.Wallet.fromMnemonic(AppConf.signerMnemonic, `m/44'/60'/0'/0/${i}`).connect(this.provider);
-      // eslint-disable-next-line no-await-in-loop
-      balance = await wallet.getBalance();
-      if (balance.gt(0)) {
-        this.walletSignerMap.set(wallet.address.toLowerCase(), wallet);
-        this.walletSigners.push(wallet);
-      }
-      i += 1;
-    } while (balance.gt(0));
+    if (AppConf.signerMnemonic) {
+      do {
+        const wallet = ethers.Wallet.fromMnemonic(AppConf.signerMnemonic, `m/44'/60'/0'/0/${i}`).connect(this.provider);
+        // eslint-disable-next-line no-await-in-loop
+        balance = await wallet.getBalance();
+        if (balance.gt(0)) {
+          this.walletSignerMap.set(wallet.address.toLowerCase(), wallet);
+          this.walletSigners.push(wallet);
+        }
+        i += 1;
+      } while (balance.gt(0));
+    }
   }
 
   // Properties

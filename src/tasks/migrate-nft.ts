@@ -30,7 +30,7 @@ export const migrateNft = async (instanceName: 'polygon' | 'fantom', cfg: Partia
     const migratingList = migrations.filter((e) => e.owner === owner);
     const migratingNftTokenId = migratingList.map((e) => e.nftTokenId);
     const migratingIds = migratingList.map((e) => e.id);
-    AppLogger.info(`Processing ${migratingList.length} record for ${owner}`);
+    AppLogger.info(`Processing ${migratingList.length} record for ${owner} (${instanceName})`);
     if (cfg.distributorContract && cfg.migratorProxyContract) {
       const from = wallet.address;
       const to = cfg.migratorProxyContract.address;
@@ -146,8 +146,6 @@ export const migrateNft = async (instanceName: 'polygon' | 'fantom', cfg: Partia
     } else {
       AppLogger.crit(`This blockchain ${chainId} do not support migration`);
     }
-  } else {
-    AppLogger.debug('No new migration record found');
   }
 };
 

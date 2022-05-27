@@ -10,8 +10,8 @@ export interface IApplicationConfig {
   fullNodeRpc: string;
   mariadbPolygon?: string;
   mariadbFantom?: string;
-  migratorPrivateKey: string;
-  signerMnemonic: string;
+  migratorPrivateKey?: string;
+  signerMnemonic?: string;
   serviceBind: {
     protocol: string;
     hostname: string;
@@ -84,7 +84,7 @@ const configLoader = Singleton<ConfigLoader>(
       name: 'migratorPrivateKey',
       type: 'string',
       location: 'any',
-      defaultValue: '',
+      require: false,
       postProcess: (e) => e.trim(),
       validator: (e) => /^0x[0-9a-f]+$/i.test(e),
       message: 'Private key should be in hex string with 0x prefix',
@@ -93,6 +93,7 @@ const configLoader = Singleton<ConfigLoader>(
       name: 'signerMnemonic',
       type: 'string',
       location: 'any',
+      require: false,
       postProcess: (e) => e.trim(),
       validator: (e) => /^[a-z\s]+$/i.test(e),
       message: 'It should be normal words and space only',

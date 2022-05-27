@@ -16,12 +16,6 @@ NODE_ENV=development
 MARIADB_CONNECT_URL=mysql://root:mariadb@localhost:3306/ftm_test
 
 FULL_NODE_RPC=https://rpc.testnet.fantom.network/
-
-# Private key of migrator
-MIGRATOR_PRIVATE_KEY=0x....
-
-# Passphrase of signers
-SIGNER_MNEMONIC=morning boring...
 ```
 
 ## Extra configuration for BNB Chain
@@ -29,7 +23,16 @@ SIGNER_MNEMONIC=morning boring...
 For BSC you might need to add two extra database config for cross-chain migration
 
 ```
+# Private key of migrator
+MIGRATOR_PRIVATE_KEY=0x....
+
+# Passphrase of signers
+SIGNER_MNEMONIC=morning boring...
+
+# Database of polygon observer
 MARIADB_POLYGON=mysql://root:mariadb@localhost:3306/polygon_db
+
+# Database of fantom observer
 MARIADB_FANTOM=mysql://root:mariadb@localhost:3306/fantom_db
 ```
 
