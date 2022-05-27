@@ -26,7 +26,7 @@ export async function up(knex: Knex): Promise<void> {
 
     table.text('data', 'longtext').comment('Data of given transaction');
 
-    table.bigInteger('nonce').unsigned().unique().notNullable().index().comment('Nonce of current transaction');
+    table.bigInteger('nonce').unsigned().notNullable().index().comment('Nonce of current transaction');
 
     table.bigInteger('gasPrice').comment('Nonce of current transaction');
 
