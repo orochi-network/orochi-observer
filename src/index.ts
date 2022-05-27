@@ -146,13 +146,15 @@ const defaultStartBlock = new Map<number, number>([
       AppState.queue.add('Syncing migration transfer', syncMigration);
     }
     // Migrate the migration record on target blockchain
-    if (networkCfg.migratorProxy) {
+    if (networkCfg.migratorProxy && networkCfg.distributor && AppConf.migratorPrivateKey && AppConf.signerMnemonic) {
       if (AppConf.mariadbFantom) {
+        AppLogger.info(`Starting migration task for Fantom`);
         AppState.queue.add('Migrate NFTs from Fantom', async () => {
           await migrateNft('fantom', networkCfg);
         });
       }
       if (AppConf.mariadbPolygon) {
+        AppLogger.info(`Starting migration task for Polygon`);
         AppState.queue.add('Migrate NFTs from Polygon', async () => {
           await migrateNft('polygon', networkCfg);
         });
