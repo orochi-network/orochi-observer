@@ -66,7 +66,7 @@ const tokenData = [
     name: 'DuelistKingCard',
     symbol: 'DKC',
     decimal: 18,
-    address: '0x4D61B0cf37494719527c8a526D0fC68f871B192d',
+    address: '0xE1f03feAFB6107E82191CdB46f270c2ce962eC4e',
   },
   {
     chainId: 4002,
@@ -74,7 +74,7 @@ const tokenData = [
     name: 'DuelistKingItem',
     symbol: 'DKI',
     decimal: 18,
-    address: '0x5657F4BB6771f1b0A9461Ea4e7643bcc7c568f3f',
+    address: '0x8BD47c687d0D3299a71f2f9Cd9D216C2Df1271d3',
   },
 ];
 
